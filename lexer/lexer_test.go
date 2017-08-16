@@ -3,7 +3,7 @@ package lexer
 import (
 	"testing"
 
-	"goclang/token"
+	"GoClang/token"
 )
 
 func TestNextToken(t *testing.T)  {

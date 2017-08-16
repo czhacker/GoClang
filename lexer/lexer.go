@@ -1,7 +1,7 @@
 package lexer
 
 import (
-	"goclang/token"
+	"GoClang/token"
 )
 
 type Lexer struct {
@@ -9,8 +9,8 @@ type Lexer struct {
 	position int
 	readPosition int
 	ch byte
-}
 
+}
 func New(newInput string) *Lexer {
 	l := &Lexer{input: newInput}
 	l.readChar()
