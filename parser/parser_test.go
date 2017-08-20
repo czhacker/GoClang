@@ -360,7 +360,7 @@ func TestIfExpression(t *testing.T)  {
 		t.Errorf("IfExpression.Consequence.Statements not contain 1. got=%d",len(ifExp.Consequence.Statements))
 	}
 
-	consequence, ok := ifExp.Consequence.Statements[0].(ast.ExpressionStatement)
+	consequence, ok := ifExp.Consequence.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
 		t.Fatalf("ifExp.Consequence.Statements[0] is not ast.ExpressionStatement. got=%T", ifExp.Consequence.Statements[0])
 	}
@@ -372,6 +372,8 @@ func TestIfExpression(t *testing.T)  {
 	if ifExp.Alternative != nil {
 		t.Errorf("ifExp.Alternative was not nil. ")
 	}
+
+
 }
 
 func testLiteralExpression(t *testing.T, exp ast.Expression, expected interface{}) bool{
