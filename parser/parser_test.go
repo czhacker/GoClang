@@ -326,12 +326,11 @@ func TestBooleanExpression(t *testing.T) {
 		if exp.Value != tt.expect {
 			t.Errorf("exp.Value is not %t. got=%t", tt.expect, exp.Value)
 		}
-
 	}
 }
 
 func TestIfExpression(t *testing.T)  {
-	input := `if(x < y) { y; }`
+	input := `if(x < y) { y; } else { x; }`
 
 	l := lexer.New(input)
 	p := New(l)
@@ -369,11 +368,14 @@ func TestIfExpression(t *testing.T)  {
 		return
 	}
 
-	if ifExp.Alternative != nil {
-		t.Errorf("ifExp.Alternative was not nil. ")
+	alternative, ok := ifExp.Alternative.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("ifExp.Alternative.Statements[0] is not *ast.ExpressionStatement. got=%T", ifExp.Alternative.Statements[0])
 	}
 
-
+	if !testLiteralExpression(t, alternative.Expression, "x") {
+		return
+	}
 }
 
 func testLiteralExpression(t *testing.T, exp ast.Expression, expected interface{}) bool{
