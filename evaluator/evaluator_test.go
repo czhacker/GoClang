@@ -16,13 +16,20 @@ func TestEvalIntegerExpression(t *testing.T)  {
 		{"10", 10},
 		{"-5",-5},
 		{"-10",-10},
+		{"5 + 5 + 5 + 5 + 10 + 10", 40},
+		{"2 * 2 * 2", 8},
+		{"5 + 2 * 2", 9},
+		{"20 + 2 * -10 + 5", 5},
+		{"3 * (3 * 3) + 10", 37},
+		{"10 / 2 + 3 * 10", 35},
+		{"50 / 2 * 2", 50},
 	}
 
 
 
 	for _, tt := range tests {
-		evaluator := testEval(tt.input)
-		testIntegerObject(t, evaluator, tt.expected)
+		evaluated := testEval(tt.input)
+		testIntegerObject(t, evaluated, tt.expected)
 	}
 }
 
@@ -33,6 +40,22 @@ func TestEvalBooleanExpression(t *testing.T)  {
 	}{
 		{"true", true},
 		{"false", false},
+		{"1 < 2", true},
+		{"1 > 2", false},
+		{"1 < 1", false},
+		{" 1 == 1", true},
+		{"1 != 1",false},
+		{"1 == 2", false},
+		{"1 != 2", true},
+		{"true == true", true},
+		{"true != false", true},
+		{"false == false", true},
+		{"false == true", false},
+		{"true != true", false},
+		{"(1 > 2) == true", false},
+		{"(1 < 2) == true", true},
+		{"(1 > 2) == false", true},
+		{"(1 < 2) == false", false},
 	}
 
 	for _, tt := range tests {

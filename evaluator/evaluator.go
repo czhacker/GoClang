@@ -3,6 +3,7 @@ package evaluator
 import (
 	"GoClang/ast"
 	"GoClang/object"
+	"fmt"
 )
 
 var (
@@ -28,7 +29,10 @@ func Eval(node ast.Node) object.Object {
 	case *ast.PrefixExpression:
 		right := Eval(node.Right)
 		return evalPrefixExpression(node.Operator, right)
-
+	case *ast.InfixExpression:
+		left := Eval(node.Left)
+		right := Eval(node.Right)
+		return evalInfixExpression(node.Operator, left, right)
 	}
 	return nil
 }
@@ -60,6 +64,19 @@ func evalPrefixExpression(operator string, obj object.Object) object.Object {
 	}
 }
 
+func evalInfixExpression(operator string, left, right object.Object) object.Object {
+	switch {
+	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
+		return evalIntegerInfixExpression(operator, left, right)
+	case operator == "==":
+		return nativeBoolToBooleanObject(left == right)
+	case operator == "!=":
+		return nativeBoolToBooleanObject(left != right)
+	default:
+		return NULL
+	}
+}
+
 func evalBangOperatorExpression(obj object.Object) object.Object {
 	switch obj {
 	case TRUE:
@@ -79,4 +96,34 @@ func evalMinusOperatorExpression(obj object.Object) object.Object  {
 		return NULL
 	}
 	return &object.Integer{Value:-result.Value}
+}
+
+func evalIntegerInfixExpression(operator string, left, right object.Object) object.Object {
+	leftValue := left.(*object.Integer).Value
+	rightValue := right.(*object.Integer).Value
+
+	switch operator {
+	case "+":
+		return &object.Integer{Value:leftValue + rightValue}
+	case "-":
+		return &object.Integer{Value:leftValue - rightValue}
+	case "*":
+		return &object.Integer{Value:leftValue * rightValue}
+	case "/":
+		if rightValue == 0 {
+			fmt.Printf("DIVIDEND ZERO IS ILLEGAL!\n")
+			return NULL
+		}
+		return &object.Integer{Value:leftValue / rightValue}
+	case "<":
+		return nativeBoolToBooleanObject(leftValue < rightValue)
+	case ">":
+		return nativeBoolToBooleanObject(leftValue > rightValue)
+	case "==":
+		return nativeBoolToBooleanObject(leftValue == rightValue)
+	case "!=":
+		return nativeBoolToBooleanObject(leftValue != rightValue)
+	default:
+		return NULL
+	}
 }
