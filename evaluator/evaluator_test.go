@@ -139,6 +139,7 @@ func TestErrorHandling(t *testing.T)  {
 		{"if (10 > 1) { true + false; }", "unknown operator: BOOLEAN + BOOLEAN"},
 		{`if(10 > 1){ if(10 > 1){ return true + false; } return 1;}`,"unknown operator: BOOLEAN + BOOLEAN"},
 		{"foobar","identifier not found: foobar"},
+		{`"hello" - "world"`, "unknown operator: STRING - STRING"},
 	}
 
 	for _, tt := range tests {
@@ -224,6 +225,33 @@ func TestClosures(t *testing.T)  {
 	testIntegerObject(t, testEval(input), 5)
 }
 
+func TestString(t *testing.T)  {
+	input := `"Hello World";`
+
+	evaluated := testEval(input)
+	strObj, ok := evaluated.(*object.String)
+	if !ok {
+		t.Fatalf("object is not String. got=%T", evaluated)
+	}
+
+	if strObj.Value != "Hello World" {
+		t.Fatalf("String.Value is not %q. got=%q", "Hello World", strObj.Value)
+	}
+}
+
+func TestStringConcatenation(t *testing.T)  {
+	input := `"Hello" + " " + "World!"`
+
+	evaluated := testEval(input)
+	strObj, ok := evaluated.(*object.String)
+	if !ok {
+		t.Fatalf("object is not String. got=%T", evaluated)
+	}
+
+	if strObj.Value != "Hello World!" {
+		t.Fatalf("String.Value is not %q. got=%q", "Hello World", strObj.Value)
+	}
+}
 func testEval(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
@@ -267,5 +295,6 @@ func testNullObject(t *testing.T, obj object.Object) bool {
 	}
 	return true
 }
+
 
 

@@ -422,6 +422,34 @@ func TestCallExpression(t *testing.T)  {
 	testInfixExpression(t, callExp.Arguments[2], 4, "+", 5)
 }
 
+func TestStringLiteralExpression(t *testing.T)  {
+	input := `"hello world";`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParserProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("Program Statements does not contain 1 statement. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program Statements[0] is not *ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
+	stringExp, ok := stmt.Expression.(*ast.StringLiteral)
+	if !ok {
+		t.Fatalf("stmt.Expression is not *ast.StringLiteral. got=%T", stmt.Expression)
+	}
+
+	if stringExp.Value != "hello world" {
+		t.Fatalf("stringLiteral.Value is not %q. got=%q\n", "hello world", stringExp.Value)
+	}
+}
+
+
 func checkParserErrors(t *testing.T, p *Parser){
 	errors := p.Errors()
 	if len(errors) == 0{
