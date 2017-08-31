@@ -7,11 +7,10 @@ import (
 )
 
 var (
-	TRUE = &object.Boolean{Value:true}
-	FALSE = &object.Boolean{Value:false}
-	NULL = &object.Null{}
+	TRUE  = &object.Boolean{Value: true}
+	FALSE = &object.Boolean{Value: false}
+	NULL  = &object.Null{}
 )
-
 
 func Eval(node ast.Node, env *object.Environment) object.Object {
 	switch node := node.(type) {
@@ -22,7 +21,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return Eval(node.Expression, env)
 
 	case *ast.IntegerLiteral:
-		return &object.Integer{Value:node.Value}
+		return &object.Integer{Value: node.Value}
 
 	case *ast.Boolean:
 		return nativeBoolToBooleanObject(node.Value)
@@ -57,7 +56,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if isError(value) {
 			return value
 		}
-		return &object.ReturnValue{Value:value}
+		return &object.ReturnValue{Value: value}
 
 	case *ast.LetStatement:
 		value := Eval(node.Value, env)
@@ -72,7 +71,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.FunctionLiteral:
 		params := node.Parameters
 		body := node.Body
-		return &object.Function{Parameters:params, Env:env, Body:body}
+		return &object.Function{Parameters: params, Env: env, Body: body}
 
 	case *ast.CallExpression:
 		function := Eval(node.Function, env)
@@ -87,9 +86,28 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return applyFunction(function, args)
 
 	case *ast.StringLiteral:
-		return &object.String{Value:node.Value}
-	}
+		return &object.String{Value: node.Value}
 
+	case *ast.ArrayLiteral:
+		elements := evalExpressions(node.Elements, env)
+		if len(elements) == 1 && isError(elements[0]) {
+			return elements[0]
+		}
+		return &object.Array{Elements: elements}
+
+	case *ast.IndexExpression:
+		left := Eval(node.Left, env)
+		if isError(left) {
+			return left
+		}
+
+		right := Eval(node.Index, env)
+		if isError(right) {
+			return right
+		}
+		return evalIndexExpression(left, right)
+
+	}
 
 	return nil
 }
@@ -115,7 +133,7 @@ func evalStatements(stmts []ast.Statement, env *object.Environment) object.Objec
 	for _, statement := range stmts {
 		result = Eval(statement, env)
 
-		if returnValue, ok := result.(*object.ReturnValue); ok{
+		if returnValue, ok := result.(*object.ReturnValue); ok {
 			return returnValue.Value
 		}
 	}
@@ -196,12 +214,12 @@ func evalBangOperatorExpression(obj object.Object) object.Object {
 	}
 }
 
-func evalMinusOperatorExpression(obj object.Object) object.Object  {
+func evalMinusOperatorExpression(obj object.Object) object.Object {
 	result, ok := obj.(*object.Integer)
 	if !ok {
 		return newError("unknown operator: -%s", obj.Type())
 	}
-	return &object.Integer{Value:-result.Value}
+	return &object.Integer{Value: -result.Value}
 }
 
 func evalIntegerInfixExpression(operator string, left, right object.Object) object.Object {
@@ -210,16 +228,16 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 
 	switch operator {
 	case "+":
-		return &object.Integer{Value:leftValue + rightValue}
+		return &object.Integer{Value: leftValue + rightValue}
 	case "-":
-		return &object.Integer{Value:leftValue - rightValue}
+		return &object.Integer{Value: leftValue - rightValue}
 	case "*":
-		return &object.Integer{Value:leftValue * rightValue}
+		return &object.Integer{Value: leftValue * rightValue}
 	case "/":
 		if rightValue == 0 {
 			return newError("Dividend=0 illegal!")
 		}
-		return &object.Integer{Value:leftValue / rightValue}
+		return &object.Integer{Value: leftValue / rightValue}
 	case "<":
 		return nativeBoolToBooleanObject(leftValue < rightValue)
 	case ">":
@@ -240,17 +258,16 @@ func evalStringInfixExpression(operator string, left, right object.Object) objec
 
 	leftValue := left.(*object.String).Value
 	rightValue := right.(*object.String).Value
-	return &object.String{Value:leftValue + rightValue}
+	return &object.String{Value: leftValue + rightValue}
 }
-
 
 func evalIfExpression(node *ast.IfExpression, env *object.Environment) object.Object {
 	condition := Eval(node.Condition, env)
-	if isTruthy(condition){
+	if isTruthy(condition) {
 		return Eval(node.Consequence, env)
-	}else if node.Alternative != nil{
+	} else if node.Alternative != nil {
 		return Eval(node.Alternative, env)
-	}else{
+	} else {
 		return NULL
 	}
 }
@@ -269,7 +286,7 @@ func isTruthy(condition object.Object) bool {
 }
 
 func newError(format string, a ...interface{}) *object.Error {
-	return &object.Error{Message:fmt.Sprintf(format,a...)}
+	return &object.Error{Message: fmt.Sprintf(format, a...)}
 }
 
 func isError(obj object.Object) bool {
@@ -280,7 +297,7 @@ func isError(obj object.Object) bool {
 }
 
 func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object {
-	if val, ok := env.Get(node.Value); ok{
+	if val, ok := env.Get(node.Value); ok {
 		return val
 	}
 
@@ -304,20 +321,40 @@ func applyFunction(fn object.Object, args []object.Object) object.Object {
 	}
 }
 
-func extendFunctionEnv(fn *object.Function, args []object.Object)  *object.Environment{
+func extendFunctionEnv(fn *object.Function, args []object.Object) *object.Environment {
 	env := object.NewClosedEnvironments(fn.Env)
 
-	for paramIdx, param := range fn.Parameters{
+	for paramIdx, param := range fn.Parameters {
 		env.Set(param.Value, args[paramIdx])
 	}
 	return env
 }
 
-func unwrapReturnValue(obj object.Object)  object.Object{
+func unwrapReturnValue(obj object.Object) object.Object {
 	if returnValue, ok := obj.(*object.ReturnValue); ok {
 		return returnValue.Value
 	}
 	return obj
 }
 
+func evalIndexExpression(left object.Object, index object.Object) object.Object {
+	switch {
+	case left.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ:
+		{
+			return evalArrayIndexExpression(left, index)
+		}
+	default:
+		return newError("index operator is not support: %s", left.Type())
+	}
+}
 
+func evalArrayIndexExpression(left object.Object, index object.Object) object.Object {
+	arrayObject := left.(*object.Array)
+	idx := index.(*object.Integer).Value
+	max := int64(len(arrayObject.Elements) - 1)
+
+	if idx < 0 || idx > max {
+		return NULL
+	}
+	return arrayObject.Elements[idx]
+}

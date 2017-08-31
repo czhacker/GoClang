@@ -1,18 +1,18 @@
 package repl
 
 import (
-	"GoClang/parser"
-	"GoClang/lexer"
 	"GoClang/evaluator"
-	"fmt"
-	"bufio"
-	"io"
+	"GoClang/lexer"
 	"GoClang/object"
+	"GoClang/parser"
+	"bufio"
+	"fmt"
+	"io"
 )
 
 const PROMPT = ">> "
 
-func Start(in io.Reader, out io.Writer)  {
+func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
 	env := object.NewEnviroment()
 

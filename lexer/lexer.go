@@ -5,19 +5,19 @@ import (
 )
 
 type Lexer struct {
-	input string
-	position int
+	input        string
+	position     int
 	readPosition int
-	ch byte
-
+	ch           byte
 }
+
 func New(newInput string) *Lexer {
 	l := &Lexer{input: newInput}
 	l.readChar()
 	return l
 }
 
-func (l *Lexer) readChar()  {
+func (l *Lexer) readChar() {
 	if l.readPosition == len(l.input) {
 		l.ch = 0
 	} else {
@@ -28,14 +28,14 @@ func (l *Lexer) readChar()  {
 }
 
 func (l *Lexer) peekChar() byte {
-	if l.readPosition >= len(l.input){
+	if l.readPosition >= len(l.input) {
 		return 0
-	}else {
+	} else {
 		return l.input[l.readPosition]
 	}
 
 }
-func (l *Lexer) skipWhiteSpace()  {
+func (l *Lexer) skipWhiteSpace() {
 	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
 		l.readChar()
 	}
@@ -51,8 +51,8 @@ func (l *Lexer) NextToken() token.Token {
 		if l.peekChar() == '=' {
 			ch := l.ch
 			l.readChar()
-			tok = token.Token{Type:token.EQ, Literal:string(ch) + string(l.ch)}
-		}else{
+			tok = token.Token{Type: token.EQ, Literal: string(ch) + string(l.ch)}
+		} else {
 			tok = newToken(token.ASSIGN, l.ch)
 		}
 	case ';':
@@ -75,12 +75,12 @@ func (l *Lexer) NextToken() token.Token {
 		if l.peekChar() == '=' {
 			ch := l.ch
 			l.readChar()
-			tok = token.Token{Type:token.NOT_EQ, Literal:string(ch) + string(l.ch)}
-		}else {
-			tok = newToken(token.BANG,l.ch)
+			tok = token.Token{Type: token.NOT_EQ, Literal: string(ch) + string(l.ch)}
+		} else {
+			tok = newToken(token.BANG, l.ch)
 		}
 	case '>':
-		tok = newToken(token.GT,l.ch)
+		tok = newToken(token.GT, l.ch)
 	case '<':
 		tok = newToken(token.LT, l.ch)
 	case '/':
@@ -90,21 +90,25 @@ func (l *Lexer) NextToken() token.Token {
 	case '"':
 		tok.Type = token.STRING
 		tok.Literal = l.readString()
+	case '[':
+		tok = newToken(token.LBRACKET, l.ch)
+	case ']':
+		tok = newToken(token.RBRACKET, l.ch)
 
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
 		return tok
 	default:
-		if isLetter(l.ch){
+		if isLetter(l.ch) {
 			tok.Literal = l.readIdentifier()
 			tok.Type = token.LookupIdent(tok.Literal)
 			return tok
-		}else if isDigit(l.ch){
+		} else if isDigit(l.ch) {
 			tok.Literal = l.readNumber()
 			tok.Type = token.INT
 			return tok
-		}else {
+		} else {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}
 	}
@@ -112,7 +116,7 @@ func (l *Lexer) NextToken() token.Token {
 	return tok
 }
 
-func (l *Lexer) readIdentifier() string{
+func (l *Lexer) readIdentifier() string {
 	position := l.position
 	for isLetter(l.ch) {
 		l.readChar()
@@ -120,7 +124,7 @@ func (l *Lexer) readIdentifier() string{
 	return l.input[position:l.position]
 }
 
-func (l *Lexer) readNumber() string{
+func (l *Lexer) readNumber() string {
 	position := l.position
 	for isDigit(l.ch) {
 		l.readChar()
@@ -139,18 +143,14 @@ func (l *Lexer) readString() string {
 	return l.input[position:l.position]
 }
 
-
-func newToken(tokenType token.Tokentype, ch byte) token.Token  {
-	return token.Token{Type:tokenType, Literal:string(ch)}
+func newToken(tokenType token.Tokentype, ch byte) token.Token {
+	return token.Token{Type: tokenType, Literal: string(ch)}
 }
 
 func isLetter(ch byte) bool {
-	return (ch >= 'a' && ch <='z') || (ch >= 'A' && ch <= 'Z') || ch == '_'
+	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_'
 }
 
 func isDigit(ch byte) bool {
 	return ch >= '0' && ch <= '9'
 }
-
-
-

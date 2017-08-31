@@ -7,10 +7,10 @@ type Environment struct {
 
 func NewEnviroment() *Environment {
 	s := make(map[string]Object)
-	return &Environment{store:s, outer:nil}
+	return &Environment{store: s, outer: nil}
 }
 
-func NewClosedEnvironments(outer *Environment) *Environment{
+func NewClosedEnvironments(outer *Environment) *Environment {
 	env := NewEnviroment()
 	env.outer = outer
 	return env
@@ -28,4 +28,3 @@ func (e *Environment) Set(name string, value Object) Object {
 	e.store[name] = value
 	return value
 }
-
