@@ -138,6 +138,7 @@ func TestErrorHandling(t *testing.T) {
 		{`if(10 > 1){ if(10 > 1){ return true + false; } return 1;}`, "unknown operator: BOOLEAN + BOOLEAN"},
 		{"foobar", "identifier not found: foobar"},
 		{`"hello" - "world"`, "unknown operator: STRING - STRING"},
+		{`{"name": "Monkey"}[fn(x){ x }];`, "unusable as hash key: FUNCTION"},
 	}
 
 	for _, tt := range tests {
@@ -328,6 +329,72 @@ func TestArrayIndexExpression(t *testing.T) {
 	}
 
 }
+
+func TestHashLiterals(t *testing.T)  {
+	input := `let two = "two";
+	{
+		"one" : 10 - 9,
+		two : 1 + 1,
+		"thr" + "ee" : 6 / 2,
+		4 : 4,
+		true : 5,
+		false : 6
+	}`
+
+	evaluated := testEval(input)
+	result, ok := evaluated.(*object.Hash)
+	if !ok {
+		t.Fatalf("Eval didn't return Hash, got=%T (%+v)", evaluated, evaluated)
+	}
+
+	expected := map[object.HashKey]int64{
+		(&object.String{Value:"one"}).HashKey() : 1,
+		(&object.String{Value:"two"}).HashKey() : 2,
+		(&object.String{Value:"three"}).HashKey() : 3,
+		(&object.Integer{Value:4}).HashKey() : 4,
+		(&object.Boolean{Value:true}).HashKey() : 5,
+		(&object.Boolean{Value:false}).HashKey() : 6,
+	}
+
+	if len(expected) != len(result.Pair) {
+		t.Fatalf("Hash has wrong num of pairs. got=%d", len(result.Pair))
+	}
+
+	for expectedKey, expectedValue := range expected{
+		pair, ok := result.Pair[expectedKey]
+		if !ok {
+			t.Error("no pair for given key in Pairs")
+		}
+
+		testIntegerObject(t, pair.Value, expectedValue)
+	}
+}
+
+func TestHashIndexExpressions(t *testing.T)  {
+	tests := []struct{
+		input string
+		expected interface{}
+	}{
+		{`{"foo": 5}["foo"]`,5},
+		{`{"foo": 5}["bar"]`, nil},
+		{`let key = "foo"; {"foo": 5}[key]`, 5},
+		{`{}["foo"]`, nil},
+		{`{5:5}[5]`, 5},
+		{`{true:5}[true]`, 5},
+		{`{false: 5}[false]`, 5},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		integer, ok := tt.expected.(int)
+		if ok {
+			testIntegerObject(t, evaluated, int64(integer))
+		}else {
+			testNullObject(t, evaluated)
+		}
+	}
+}
+
 func testEval(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
